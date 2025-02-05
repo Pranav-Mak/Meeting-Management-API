@@ -96,8 +96,6 @@ async function deleteMeeting(meetingId) {
     alert('An error occurred while deleting the meeting');
   }
 }
-
-
 // Load Meetings Function
 async function loadMeetings() {
   try {
