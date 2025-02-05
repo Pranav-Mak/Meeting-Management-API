@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <button id="logoutButton">Logout</button>
+    <h1>Meeting Management</h1>
+
+    <!-- Create Meeting Form -->
+    <div class="form-container">
+      <h2>Create Meeting</h2>
+      <form id="create-meeting-form">
+        <input type="text" id="meeting-name" placeholder="Meeting Name" required>
+        <input type="date" id="meeting-date" required>
+        <input type="time" id="meeting-time" required>
+        <button type="submit">Create Meeting</button>
+      </form>
+    </div>
+
+    <!-- Meeting List -->
+    <div class="meeting-list">
+      <h2>Upcoming Meetings</h2>
+      <ul id="meetings-list"></ul>
+    </div>
+  </div>
+
+  <script src="meeting.js"></script>
+</body>
+</html>
