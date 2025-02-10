@@ -64,6 +64,7 @@ router.use((0, cors_1.default)({
 }));
 function authMiddleware(req, res, next) {
     const token = req.cookies.token;
+    console.log('Token from cookies:', token);
     if (!token) {
         console.error("No token found in cookies");
         res.status(400).json({ error: 'Access Denied1' });
@@ -79,110 +80,39 @@ function authMiddleware(req, res, next) {
             console.error('Token verification failed:', err);
             res.status(400).json({ error: "Access Denied3" });
         }
-        req.body.manager = user;
+        req.body.employee = user;
         next();
     });
 }
-router.post('/', authMiddleware, function (req, res) {
+router.post('/join', authMiddleware, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { meetingName, date, time } = req.body;
+        const employeeId = req.body.employee.mainId2;
         console.log('Decoded User:', req.body.manager);
-        const managerId = req.body.manager.mainId;
+        const meetingId = req.body.meetingId;
         try {
-            const meeting = yield prisma.meeting.create({
-                data: {
-                    meetingName,
-                    date,
-                    time,
-                    managerId: parseInt(managerId)
-                }
-            });
-            res.status(200).json(meeting);
-        }
-        catch (e) {
-            console.error("Error:", e);
-            res.status(500).json({ error: "Error Creating Meeting" });
-        }
-    });
-});
-router.put('/', authMiddleware, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { id, meetingName, date, time } = req.body;
-        const managerId = req.body.manager.mainId;
-        console.log(`Updating meeting with ID: ${id}`); // Log the ID for debugging
-        try {
-            const meeting = yield prisma.meeting.update({
+            const existingEntry = yield prisma.meetingEmployee.findUnique({
                 where: {
-                    id: parseInt(id),
-                },
+                    meetingId_employeeId: {
+                        meetingId: parseInt(meetingId),
+                        employeeId: parseInt(employeeId)
+                    }
+                }
+            });
+            if (existingEntry) {
+                res.status(400).json({ message: "Employee has already joined the meeting" });
+                return;
+            }
+            const join = yield prisma.meetingEmployee.create({
                 data: {
-                    meetingName,
-                    date,
-                    time,
-                    managerId: parseInt(managerId)
-                }
+                    employeeId: parseInt(employeeId),
+                    meetingId: parseInt(meetingId),
+                },
             });
-            res.status(200).json(meeting);
+            res.status(200).json({ message: "Joining meeting successful" });
         }
         catch (e) {
-            console.error("Error:", e);
-            res.status(500).json({ error: "Error Creating Meeting" });
-        }
-    });
-});
-router.get('/bulk', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const meetings = yield prisma.meeting.findMany();
-        res.status(200).json(meetings);
-    }
-    catch (error) {
-        console.error("Error fetching meetings:", error);
-        res.status(500).json({ error: "Error fetching meetings" });
-    }
-}));
-router.delete('/:id', authMiddleware, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { id } = req.params; // Get the meeting id from the URL parameter
-        const managerId = req.body.manager.mainId; // Assuming you have userId available via middleware
-        try {
-            const meeting = yield prisma.meeting.findFirst({
-                where: { id: parseInt(id) }
-            });
-            if (!meeting) {
-                res.status(404).json({ error: "Meeting not found" });
-                return;
-            }
-            if (meeting.managerId !== parseInt(managerId)) {
-                res.status(403).json({ error: "You are not authorized to delete this meeting" });
-                return;
-            }
-            yield prisma.meetingEmployee.deleteMany({
-                where: { meetingId: parseInt(id) },
-            });
-            yield prisma.meeting.delete({
-                where: { id: parseInt(id) },
-            });
-            res.status(200).json({ message: "Meeting deleted successfully" });
-        }
-        catch (e) {
-            console.error("Error deleting meeting:", e);
-            res.status(500).json({ error: "Error deleting meeting" });
-        }
-    });
-});
-router.get('/meetMembers', authMiddleware, function (req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const meetings = yield prisma.meetingEmployee.findMany({
-                include: {
-                    employee: true, // Include employee data
-                }
-            });
-            res.status(200).json(meetings);
-        }
-        catch (error) {
-            console.error("Error fetching meetings:", error);
-            res.status(500).json({ error: "Error fetching meetings" });
+            console.error("Error joining todo:", e);
+            res.status(500).json({ error: "Error joining todo" });
         }
     });
 });

@@ -42,6 +42,7 @@ function authMiddleware(req:Request, res:Response, next:NextFunction):void{
 })
 }
 
+
 router.post('/',authMiddleware,async function(req,res){
     const {meetingName,date,time } = req.body;
     console.log('Decoded User:', req.body.manager);
@@ -67,10 +68,12 @@ router.post('/',authMiddleware,async function(req,res){
 router.put('/',authMiddleware,async function(req,res){
     const {id,meetingName,date,time } = req.body;
     const managerId= req.body.manager.mainId;
+
+    console.log(`Updating meeting with ID: ${id}`); // Log the ID for debugging
     try{
         const meeting = await prisma.meeting.update({
             where:{
-                id:parseInt(id)
+                id:parseInt(id),
             },
             data:{
                 meetingName,
@@ -86,9 +89,11 @@ router.put('/',authMiddleware,async function(req,res){
     }
 })
 
+
 router.get('/bulk', async (req, res) => {
     try {
       const meetings = await prisma.meeting.findMany();
+      
       res.status(200).json(meetings);
     } catch (error) {
       console.error("Error fetching meetings:", error);
@@ -97,35 +102,53 @@ router.get('/bulk', async (req, res) => {
   });
   
 
-router.delete('/:id', authMiddleware, async function(req, res) {
-    const { id } = req.params;  // Get the todo id from the URL parameter
-    const managerId= req.body.manager.mainId;  // Assuming you have userId available via middleware
+  router.delete('/:id', authMiddleware, async function(req, res) {
+    const { id } = req.params;  // Get the meeting id from the URL parameter
+    const managerId = req.body.manager.mainId;  // Assuming you have userId available via middleware
+
     try {
-        const todo = await prisma.meeting.findFirst({
-            where: {
-                id: parseInt(id),
-            }
+        const meeting = await prisma.meeting.findFirst({
+            where: { id: parseInt(id) }
         });
-        if (!todo) {
-             res.status(404).json({ error: "Todo not found" });
-             return
-        }
-        if (todo.managerId !== parseInt(managerId)) {
-             res.status(403).json({ error: "You are not authorized to delete this todo" });
-             return
+        
+        if (!meeting) {
+            res.status(404).json({ error: "Meeting not found" });
+            return;
         }
 
-        await prisma.meeting.delete({
-            where: {
-                id: parseInt(id),
-            },
+        if (meeting.managerId !== parseInt(managerId)) {
+            res.status(403).json({ error: "You are not authorized to delete this meeting" });
+            return;
+        }
+
+        await prisma.meetingEmployee.deleteMany({
+            where: { meetingId: parseInt(id) },
         });
-        res.status(200).json({ message: "Todo deleted successfully" });
+        
+        await prisma.meeting.delete({
+            where: { id: parseInt(id) },
+        });
+
+        res.status(200).json({ message: "Meeting deleted successfully" });
     } catch (e) {
-        console.error("Error deleting todo:", e);
-        res.status(500).json({ error: "Error deleting todo" });
+        console.error("Error deleting meeting:", e);
+        res.status(500).json({ error: "Error deleting meeting" });
     }
 });
 
+
+router.get('/meetMembers', authMiddleware, async function(req,res){
+    try {
+        const meetings = await prisma.meetingEmployee.findMany({
+          include: {
+            employee: true,  // Include employee data
+          }
+        });
+        res.status(200).json(meetings);
+      } catch (error) {
+        console.error("Error fetching meetings:", error);
+        res.status(500).json({ error: "Error fetching meetings" });
+      }
+    });
 
 export default router;

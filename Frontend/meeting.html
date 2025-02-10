@@ -27,6 +27,21 @@
       <h2>Upcoming Meetings</h2>
       <ul id="meetings-list"></ul>
     </div>
+
+
+    <!-- Edit Meeting Form (hidden by default) -->
+<div class="form-container" id="edit-meeting-container" style="display:none;">
+  <h2>Edit Meeting</h2>
+  <form id="edit-meeting-form">
+    <input type="hidden" id="edit-meeting-id"> <!-- Hidden input for the meeting ID -->
+    <input type="text" id="edit-meeting-name" placeholder="Meeting Name" required>
+    <input type="date" id="edit-meeting-date" required>
+    <input type="time" id="edit-meeting-time" required>
+    <button type="submit">Update Meeting</button>
+    <button type="button" id="cancel-edit-button">Cancel</button>
+  </form>
+</div>
+
   </div>
 
   <script src="meeting.js"></script>
